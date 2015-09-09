@@ -1,5 +1,6 @@
 ### Project Gitignore ###
 A*.zip
+*.swp
 
 ### C ###
 
