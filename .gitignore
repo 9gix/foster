@@ -1,3 +1,6 @@
+### Project Gitignore ###
+A*.zip
+
 ### C ###
 
 # Object files
