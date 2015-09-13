@@ -27,24 +27,33 @@ int main()
     char * token;
     char leftover[40];  //for cleaning up the left over inputs
     int status;
+    struct stat sb;
 
     //read user input
     printf("YWIMC > ");
     scanf("%c", &request);
     while (request != 'Q'){
-        // Handle 'R' request
+        fgets(leftover, 40, stdin); //clean up left over to ready for
+                                    // next input
 
+        // Handle 'R' request
         if (request == 'R'){
-            fgets(leftover, 40, stdin); //clean up left over to ready for
-                                        // next input
             token = strtok(leftover, " \n");
-            result = fork();
-            if (result == 0){
-                execl(token, "ex2", NULL);
-                _exit(EXIT_FAILURE);
+
+            if (stat(token, &sb) == 0){
+                result = fork();
+                if (result == 0){
+                    execl(token, "ex2", NULL);
+                    _exit(EXIT_FAILURE);
+                } else {
+                    wait(&status);
+                    printf("\n");
+                }
             } else {
-                wait(&status);
+                printf("%s not found\n\n", token);
             }
+        } else {
+            printf("unknown instruction\n\n");
         }
 
         printf("YWIMC > ");
