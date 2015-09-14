@@ -1,4 +1,7 @@
-all:	infinite alarmClock clock showCmdArg
+all:	infinite alarmClock clock showCmdArg ex3
+
+ex3: ex3.c
+	gcc -Wall -o ex3 ex3.c
 
 infinite: infinite.c
 	gcc -Wall -o infinite infinite.c
