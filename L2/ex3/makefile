@@ -14,3 +14,6 @@ clock:	clock.c
 
 showCmdArg:	showCmdArg.c
 	gcc -Wall -o showCmdArg showCmdArg.c
+
+clean:
+	rm -rf infinite alarmClock clock showCmdArg ex3
