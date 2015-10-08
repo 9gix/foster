@@ -35,8 +35,10 @@ int main()
         // to achieve the desired behavior
 
         for(i = 0; i < 3; i++){
+            sem_wait(semPtr);
             printf("p\n");
             sleep(1);
+            sem_post(semPtr);
         }
 
         //wait for child to finish
@@ -53,8 +55,10 @@ int main()
         // to achieve the desired behavior
 
         for(i = 0; i < 3; i++){
+            sem_wait(semPtr);
             printf("c\n");
             sleep(1);
+            sem_post(semPtr);
         }
 
         /*Important: Remember to detach the shared memory region*/

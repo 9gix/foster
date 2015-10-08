@@ -61,11 +61,26 @@ int main()
     //TODO:Fill in Your code here
     //Create and initialize binary sempahore
 
+    newSemaphore(&mutex);
+
+    sem_init(mutex.semPtr, 1, 1);
+
+    int half_count = N / 2;
+
     result = fork();
     if (result){        //Parent
 
         //TODO:Fill in Your code here
-
+        pCount = 0;
+        while (sharedArray[0] <= N){
+            sem_wait(mutex.semPtr);
+            if (pCount < half_count) {
+                sharedArray[sharedArray[0]] = 1111;
+                sharedArray[0] += 1;
+                pCount += 1;
+            }
+            sem_post(mutex.semPtr);
+        }
 
         //wait for child to finish
         wait(&childStatus);
@@ -97,7 +112,16 @@ int main()
     } else {            //Child
 
         //TODO:Fill in your code here
-
+        cCount = 0;
+        while (sharedArray[0] <= N){
+            sem_wait(mutex.semPtr);
+            if (cCount < half_count) {
+                sharedArray[sharedArray[0]] = 9999;
+                sharedArray[0] += 1;
+                cCount += 1;
+            }
+            sem_post(mutex.semPtr);
+        }
 
         /*Important: Remember to detach the shared memory region*/
         shmdt( (char*)sharedArray );

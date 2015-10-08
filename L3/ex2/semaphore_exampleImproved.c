@@ -57,8 +57,10 @@ int main()
         // to achieve the desired behavior
 
         for(i = 0; i < 3; i++){
+            sem_wait(mutex.semPtr);
             printf("p\n");
             sleep(1);
+            sem_post(mutex.semPtr);
         }
 
         //wait for child to finish
@@ -72,8 +74,10 @@ int main()
         // to achieve the desired behavior
 
         for(i = 0; i < 3; i++){
+            sem_wait(mutex.semPtr);
             printf("c\n");
             sleep(1);
+            sem_post(mutex.semPtr);
         }
 
         destroySempahore(&mutex);
