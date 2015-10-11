@@ -35,7 +35,8 @@ void destroySempahore( semInfoStruct* semInfo )
     shmctl(semInfo->shdMemId, IPC_RMID, NULL); 
 }
 
-void Producer(int id, int* countLoc, int* index, int* auditArea, int* bufferArea)
+void Producer(int id, int* countLoc, int* index, int* auditArea, int* bufferArea,
+        semInfoStruct* mutex, semInfoStruct* fillCount, semInfoStruct* emptyCount)
 {
     int stop = 0;
 
@@ -45,9 +46,21 @@ void Producer(int id, int* countLoc, int* index, int* auditArea, int* bufferArea
     printf("Producer %i Starts to work!\n", id);
     while(!stop){
 
-        //TODO:Fill in your code here
 
 
+        if (*index == BUFFERSIZE) {
+            *index = 0;
+        }
+
+        sem_wait(emptyCount->semPtr);
+        sem_wait(mutex->semPtr);
+        bufferArea[*index] = id;
+        auditArea[id] += 1;
+        *index += 1;
+        *countLoc -= 1;
+
+        sem_post(mutex->semPtr);
+        sem_post(fillCount->semPtr);
 
         if (*countLoc == 0)
             stop = 1;
@@ -56,7 +69,8 @@ void Producer(int id, int* countLoc, int* index, int* auditArea, int* bufferArea
 
 }
 
-void Consumer(int id, int* countLoc, int* index, int* auditArea, int* bufferArea)
+void Consumer(int id, int* countLoc, int* index, int* auditArea, int* bufferArea,
+        semInfoStruct* mutex, semInfoStruct* fillCount, semInfoStruct* emptyCount)
 {
     int stop = 0;
 
@@ -68,8 +82,17 @@ void Consumer(int id, int* countLoc, int* index, int* auditArea, int* bufferArea
     while(!stop){
 
         //TODO:Fill in your code here
+        if (*index == BUFFERSIZE) {
+            *index = 0;
+        }
 
-
+        sem_wait(fillCount->semPtr);
+        sem_wait(mutex->semPtr);
+        auditArea[id] += 1; //bufferArea[*index];
+        *index += 1;
+        *countLoc -= 1;
+        sem_post(mutex->semPtr);
+        sem_post(emptyCount->semPtr);
 
         if (*countLoc == 0)
             stop = 1;
@@ -134,6 +157,17 @@ int main(int argc, char** argv)
     //TODO:Fill in your code here for additional initialization
 
 
+    semInfoStruct mutex;
+    semInfoStruct fillCount;
+    semInfoStruct emptyCount;
+
+    newSemaphore(&mutex);
+    newSemaphore(&fillCount);
+    newSemaphore(&emptyCount);
+
+    sem_init(mutex.semPtr, 1, 1);
+    sem_init(fillCount.semPtr, 1, 0);
+    sem_init(emptyCount.semPtr, 1, BUFFERSIZE);
 
     for( i = 0; i < totalChild; i++){
         result = fork();
@@ -142,13 +176,15 @@ int main(int argc, char** argv)
                 Producer(i, &sharedArray[0], 
                                 &sharedArray[2],
                                 &sharedArray[4],
-                                &sharedArray[4+2*nProducer]);
+                                &sharedArray[4+2*nProducer],
+                            &mutex, &fillCount, &emptyCount);
                 
             } else {
                 Consumer(i-nProducer, &sharedArray[1],
                                 &sharedArray[3],
                                 &sharedArray[4+nProducer],
-                                &sharedArray[4+2*nProducer]);
+                                &sharedArray[4+2*nProducer],
+                            &mutex, &fillCount, &emptyCount);
 
             }
             /*Important: Remember to detach the shared memory region*/
