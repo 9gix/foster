@@ -46,24 +46,30 @@ void Producer(int id, int* countLoc, int* index, int* auditArea, int* bufferArea
     printf("Producer %i Starts to work!\n", id);
     while(!stop){
 
-
-
-        if (*index == BUFFERSIZE) {
-            *index = 0;
-        }
-
         sem_wait(emptyCount->semPtr);
-        sem_wait(mutex->semPtr);
-        bufferArea[*index] = id;
-        auditArea[id] += 1;
-        *index += 1;
-        *countLoc -= 1;
+        if (*countLoc == 0) {
+            stop = 1;
+        } else {
+            // Protect Critical Section
+            // Only 1 process can either 
+            // - write item to buffer
+            // - read item from buffer
+            sem_wait(mutex->semPtr);
+            if (*index == BUFFERSIZE) {
+                *index = 0;
+            }
+            bufferArea[*index] = id;
+            *index += 1;
+            // Update Production Counter
+            *countLoc -= 1;
+            sem_post(mutex->semPtr);
 
-        sem_post(mutex->semPtr);
+            // END OF Critical Section
+
+            auditArea[id] += 1;
+        }
         sem_post(fillCount->semPtr);
 
-        if (*countLoc == 0)
-            stop = 1;
     }
     printf("Producer %i Ended!\n", id);
 
@@ -82,20 +88,31 @@ void Consumer(int id, int* countLoc, int* index, int* auditArea, int* bufferArea
     while(!stop){
 
         //TODO:Fill in your code here
-        if (*index == BUFFERSIZE) {
-            *index = 0;
-        }
 
         sem_wait(fillCount->semPtr);
-        sem_wait(mutex->semPtr);
-        auditArea[id] += 1; //bufferArea[*index];
-        *index += 1;
-        *countLoc -= 1;
-        sem_post(mutex->semPtr);
-        sem_post(emptyCount->semPtr);
-
-        if (*countLoc == 0)
+        if (*countLoc == 0) {
             stop = 1;
+        } else {
+
+            // Protect Critical Section
+            // Only 1 process can either 
+            // - write item to buffer
+            // - read item from buffer
+            sem_wait(mutex->semPtr);
+            if (*index == BUFFERSIZE) {
+                *index = 0;
+            }
+            int val = bufferArea[*index];
+            *index += 1;
+            // Update Consumption Counter
+            *countLoc -= 1;
+            sem_post(mutex->semPtr);
+ 
+            // END OF Critical Section
+
+            auditArea[val] += 1;
+        }
+        sem_post(emptyCount->semPtr);
     }
 
     //Hint: Other consumers may still be waiting
